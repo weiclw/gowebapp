@@ -32,6 +32,7 @@ func main() {
 	fmt.Printf("  Icon path:  %s\n", *icon)
 
 	// Add your app logic here (e.g., construct a launch command or execute browser)
+	genPackage(*browser, *app)
 }
 
 func printUsage() {
