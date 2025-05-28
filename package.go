@@ -34,6 +34,30 @@ func getPlist(app, icon string) string {
 		"</plist>"
 }
 
+func getProfileRootDir() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Printf("Failed to get home dir: %v\n", err)
+		return ""
+	}
+
+	return filepath.Join(home, "profiles")
+}
+
+func getLauncher(browser string, app string, singleWindow bool) string {
+	app_str := "https://www/" + app + ".com"
+	if !singleWindow {
+		app_str = "--app=\"" + app_str + "\""
+	}
+
+	profile_path := filepath.Join(getProfileRootDir(), app)
+
+	return "#!/bin/bash\n\n" +
+		"/Applications/" + app + ".app" + "/Contents/MacOS/" + app + " " +
+		"--user-data-dir=" + profile_path + " " +
+		app_str
+}
+
 func getAllDirs(app string) []string {
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -62,6 +86,8 @@ func getAllDirs(app string) []string {
 		ret = append(ret, filepath.Join(app_dir, p))
 	}
 
+	ret = append(ret, filepath.Join(getProfileRootDir(), app))
+
 	return ret
 }
 
@@ -75,7 +101,7 @@ func genPackage(browser, app string) {
 	}
 
 	// Creating all directories in the wrapper package.
-        all_dirs := getAllDirs(app)
+    all_dirs := getAllDirs(app)
 	if len(all_dirs) == 0 {
 		fmt.Printf("Fails to get directory list")
 		return
