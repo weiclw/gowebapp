@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 )
@@ -45,15 +46,15 @@ func getProfileRootDir() string {
 }
 
 func getLauncher(browser string, app string, singleWindow bool) string {
-	app_str := "https://www/" + app + ".com"
-	if !singleWindow {
+	app_str := "https://www." + app + ".com"
+	if singleWindow {
 		app_str = "--app=\"" + app_str + "\""
 	}
 
 	profile_path := filepath.Join(getProfileRootDir(), app)
 
 	return "#!/bin/bash\n\n" +
-		"/Applications/" + app + ".app" + "/Contents/MacOS/" + app + " " +
+		"\"/Applications/" + browser + ".app" + "/Contents/MacOS/" + browser + "\" " +
 		"--user-data-dir=" + profile_path + " " +
 		app_str
 }
@@ -100,8 +101,24 @@ func getAllDirs(app string) []string {
 	return ret
 }
 
+func addExecMode(filename string) {
+	// Get the current file mode
+	info, err := os.Stat(filename)
+	if err != nil {
+		log.Fatalf("failed to stat file: %v", err)
+	}
+	mode := info.Mode()
+
+	// Add user execute permission (u+x)
+	err = os.Chmod(filename, mode|0100)
+	if err != nil {
+		log.Fatalf("failed to chmod: %v", err)
+	}
+}
+
 func genInfoplistFile(app_dir, app, icon string) {
-	infoplist_path := filepath.Join(app_dir, "Info.plist")
+	infoplist_path := filepath.Join(app_dir, "Contents")
+	infoplist_path = filepath.Join(infoplist_path, "Info.plist")
 	f, err := os.Create(infoplist_path)
 	if err != nil {
 		fmt.Printf("Failed to create file: %v\n", err)
@@ -122,6 +139,7 @@ func genLauncherFile(app_dir string, browser string, app string, singleWindow bo
 	parts := []string{
 		"Contents",
 		"MacOS",
+		"launcher.sh",
 	}
 
 	launcher_path := app_dir
@@ -134,13 +152,19 @@ func genLauncherFile(app_dir string, browser string, app string, singleWindow bo
 		fmt.Printf("Failed to create file: %v\n", err)
 		return
 	}
-	defer f.Close()
 
-	launcher_text := getLauncher(browser, app, singleWindow)
-	if _, err := f.WriteString(launcher_text); err != nil {
-		fmt.Printf("Failed to write to file: %v\n", err)
-		return
-	}
+	// Make sure that the file is closed at the end of the anonymous function.
+	func(browser string, app string, singleWindow bool, f *os.File) {
+		defer f.Close()
+
+		launcher_text := getLauncher(browser, app, singleWindow)
+		if _, err := f.WriteString(launcher_text); err != nil {
+			fmt.Printf("Failed to write to file: %v\n", err)
+			return
+		}
+	}(browser, app, singleWindow, f)
+
+	addExecMode(launcher_path)
 
 	fmt.Printf("Successfully wrote to %s\n", launcher_path)
 }

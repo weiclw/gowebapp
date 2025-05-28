@@ -16,8 +16,8 @@ Directory structures:
   - Home dir
     - Applications
       - App Name.app
-        - Info.plist
         - Contents
+          - Info.plist
           - MacOS
             - launcher.sh
           - Resources
