@@ -58,11 +58,11 @@ func getLauncher(browser string, app string, singleWindow bool) string {
 		app_str
 }
 
-func getAllDirs(app string) []string {
+func getAppDir(app string) string {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		fmt.Printf("Failed to get home dir: %v\n", err)
-		return []string{}
+		return ""
 	}
 
 	intermediates := []string{
@@ -73,6 +73,15 @@ func getAllDirs(app string) []string {
 	app_dir := home
 	for _, part := range intermediates {
 		app_dir = filepath.Join(app_dir, part)
+	}
+
+	return app_dir
+}
+
+func getAllDirs(app string) []string {
+	app_dir := getAppDir(app)
+	if len(app_dir) == 0 {
+		return []string{}
 	}
 
 	relative_list := []string{
@@ -91,15 +100,53 @@ func getAllDirs(app string) []string {
 	return ret
 }
 
-// genPackage creates a directory and writes "hello" into a file
-func genPackage(browser, app string) {
-	dir := filepath.Join("foo", "bar")
+func genInfoplistFile(app_dir, app, icon string) {
+	infoplist_path := filepath.Join(app_dir, "Info.plist")
+	f, err := os.Create(infoplist_path)
+	if err != nil {
+		fmt.Printf("Failed to create file: %v\n", err)
+		return
+	}
+	defer f.Close()
 
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		fmt.Printf("Failed to create directory: %v\n", err)
+	infoplist_text := getPlist(app, icon)
+	if _, err := f.WriteString(infoplist_text); err != nil {
+		fmt.Printf("Failed to write to file: %v\n", err)
 		return
 	}
 
+	fmt.Printf("Successfully wrote to %s\n", infoplist_path)
+}
+
+func genLauncherFile(app_dir string, browser string, app string, singleWindow bool) {
+	parts := []string{
+		"Contents",
+		"MacOS",
+	}
+
+	launcher_path := app_dir
+	for _, part := range parts {
+		launcher_path = filepath.Join(launcher_path, part)
+	}
+
+	f, err := os.Create(launcher_path)
+	if err != nil {
+		fmt.Printf("Failed to create file: %v\n", err)
+		return
+	}
+	defer f.Close()
+
+	launcher_text := getLauncher(browser, app, singleWindow)
+	if _, err := f.WriteString(launcher_text); err != nil {
+		fmt.Printf("Failed to write to file: %v\n", err)
+		return
+	}
+
+	fmt.Printf("Successfully wrote to %s\n", launcher_path)
+}
+
+// genPackage creates a directory and writes "hello" into a file
+func genPackage(browser string, app string, icon string, singleWindow bool) {
 	// Creating all directories in the wrapper package.
     all_dirs := getAllDirs(app)
 	if len(all_dirs) == 0 {
@@ -114,18 +161,12 @@ func genPackage(browser, app string) {
 		}
 	}
 
-	filePath := filepath.Join(dir, "f1")
-	f, err := os.Create(filePath)
-	if err != nil {
-		fmt.Printf("Failed to create file: %v\n", err)
-		return
-	}
-	defer f.Close()
-
-	if _, err := f.WriteString("hello"); err != nil {
-		fmt.Printf("Failed to write to file: %v\n", err)
+	app_dir := getAppDir(app)
+	if len(app_dir) == 0 {
+		fmt.Printf("No app dir.")
 		return
 	}
 
-	fmt.Printf("Successfully wrote to %s\n", filePath)
+	genInfoplistFile(app_dir, app, icon)
+	genLauncherFile(app_dir, browser, app, singleWindow)
 }
