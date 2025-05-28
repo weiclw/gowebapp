@@ -4,7 +4,32 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 )
+
+func canonicalBrowserName(name string) string {
+	const chrome = "Google Chrome"
+	const brave = "Brave Browser"
+
+	translator := map[string]string{
+		"chrome": chrome,
+		"brave": brave,
+	}
+
+	lower_name := strings.ToLower(name)
+	canonical_name := translator[lower_name]
+
+	if len(canonical_name) == 0 {
+		keys := []string{}
+		for k := range translator {
+			keys = append(keys, k)
+		}
+
+		fmt.Printf("The browser name is not supported yet. Supported names: %v", keys)
+	}
+
+	return canonical_name
+}
 
 func main() {
 	// Define command-line flags
@@ -22,6 +47,9 @@ func main() {
 		printUsage()
 		return
 	}
+
+    // Get canonical browser name.
+	*browser = canonicalBrowserName(*browser)
 
 	// Output the parsed flag values
 	fmt.Println("Launching with the following configuration:")
