@@ -6,7 +6,35 @@ import (
 	"path/filepath"
 )
 
-func getAllDirs() []string {
+func getPlist(app, icon string) string {
+	header := `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+ "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+`
+
+	key_dict := map[string]string {
+		"CFBundleName": app,
+		"CFBundleDisplayName": app,
+		"CFBundleIdentifier": "com.example." + app,
+		"CFBundleVersion": "1.0",
+		"CFBundleExecutable": "launcher.sh",
+		"CFBundlePackageType": "APPL",
+	}
+
+	body := ""
+	for k, v := range key_dict {
+		body = body + "  <key>" + k + "</key>\n  <string>" + v + "</string>\n"
+	}
+
+	return header + "\n" +
+		"<plist version=\"1.0\">\n" +
+		"<dict>\n" +
+		body +
+		"</dict>\n" +
+		"</plist>"
+}
+
+func getAllDirs(app string) []string {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		fmt.Printf("Failed to get home dir: %v\n", err)
@@ -14,7 +42,8 @@ func getAllDirs() []string {
 	}
 
 	intermediates := []string{
-		"Application",
+		"Applications",
+		app + ".app",
 	}
 
 	app_dir := home
@@ -46,7 +75,7 @@ func genPackage(browser, app string) {
 	}
 
 	// Creating all directories in the wrapper package.
-        all_dirs := getAllDirs()
+        all_dirs := getAllDirs(app)
 	if len(all_dirs) == 0 {
 		fmt.Printf("Fails to get directory list")
 		return
