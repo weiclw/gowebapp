@@ -12,12 +12,12 @@ func getPlist(app, icon string) string {
  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 `
 
-	key_dict := map[string]string {
-		"CFBundleName": app,
+	key_dict := map[string]string{
+		"CFBundleName":        app,
 		"CFBundleDisplayName": app,
-		"CFBundleIdentifier": "com.example." + app,
-		"CFBundleVersion": "1.0",
-		"CFBundleExecutable": "launcher.sh",
+		"CFBundleIdentifier":  "com.example." + app,
+		"CFBundleVersion":     "1.0",
+		"CFBundleExecutable":  "launcher.sh",
 		"CFBundlePackageType": "APPL",
 	}
 
@@ -148,7 +148,7 @@ func genLauncherFile(app_dir string, browser string, app string, singleWindow bo
 // genPackage creates a directory and writes "hello" into a file
 func genPackage(browser string, app string, icon string, singleWindow bool) {
 	// Creating all directories in the wrapper package.
-    all_dirs := getAllDirs(app)
+	all_dirs := getAllDirs(app)
 	if len(all_dirs) == 0 {
 		fmt.Printf("Fails to get directory list")
 		return
