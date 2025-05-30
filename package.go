@@ -5,18 +5,19 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func getPlist(app, icon string) string {
 	header := `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-`
+ `
 
 	key_dict := map[string]string{
 		"CFBundleName":        app,
 		"CFBundleDisplayName": app,
-		"CFBundleIdentifier":  "com.example." + app,
+		"CFBundleIdentifier":  "com.v1." + app,
 		"CFBundleVersion":     "1.0",
 		"CFBundleExecutable":  "launcher.sh",
 		"CFBundlePackageType": "APPL",
@@ -47,6 +48,16 @@ func getProfileRootDir() string {
 
 func getLauncher(browser string, app string, singleWindow bool) string {
 	app_str := "https://www." + app + ".com"
+	if strings.HasSuffix(app, ".org") {
+		app_str = "https://" + app 
+	} else if strings.HasSuffix(app, ".edu") {
+		app_str = "https://" + app 
+	} else if strings.HasSuffix(app, ".com") {
+		app_str = "https://" + app 
+	} else if strings.Contains(app, ".") {
+		app_str = "https://" + app + ".com"
+	}
+
 	if singleWindow {
 		app_str = "--app=\"" + app_str + "\""
 	}
